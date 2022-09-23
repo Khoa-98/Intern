@@ -11,6 +11,8 @@ import com.vuhien.application.model.request.CreateOrderRequest;
 import com.vuhien.application.model.request.FilterProductRequest;
 import com.vuhien.application.security.CustomUserDetails;
 import com.vuhien.application.service.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,8 +48,11 @@ public class HomeController {
     @Autowired
     private PromotionService promotionService;
 
+    Logger logger = LoggerFactory.getLogger(HomeController.class);
+
     @GetMapping
     public String homePage(Model model) {
+        logger.info("An INFO Message");
 
         // Lấy 5 sản phẩm mới nhất
         List<ProductInfoDTO> newProducts = productService.getListNewProducts();

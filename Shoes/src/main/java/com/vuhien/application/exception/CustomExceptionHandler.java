@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
 import java.util.Locale;
+
 
 @RestControllerAdvice
 public class CustomExceptionHandler {
@@ -22,6 +25,8 @@ public class CustomExceptionHandler {
     @Qualifier("messageSource")
     @Autowired
     private MessageSource msgSource;
+
+
 
     @ExceptionHandler(InternalServerException.class)
     public ResponseEntity<Object> handlerInternalServerException(InternalServerException ex, WebRequest request) {

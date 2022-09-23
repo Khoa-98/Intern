@@ -9,6 +9,9 @@ import com.vuhien.application.service.BrandService;
 import com.vuhien.application.service.CategoryService;
 import com.vuhien.application.service.ImageService;
 import com.vuhien.application.service.ProductService;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +26,9 @@ import java.util.List;
 import static com.vuhien.application.config.Contant.SIZE_VN;
 
 @Controller
+
 public class ProductController {
+
 
     @Autowired
     private ProductService productService;
@@ -44,6 +49,7 @@ public class ProductController {
             @RequestParam(defaultValue = "", required = false) String category,
             @RequestParam(defaultValue = "", required = false) String brand,
             @RequestParam(defaultValue = "1", required = false) Integer page) {
+
 
         // Lấy danh sách nhãn hiệu
         List<Brand> brands = brandService.getListBrand();
