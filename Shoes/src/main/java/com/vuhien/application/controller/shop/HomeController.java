@@ -52,7 +52,7 @@ public class HomeController {
 
     @GetMapping
     public String homePage(Model model) {
-        logger.info("An INFO Message");
+        logger.info("get list product");
 
         // Lấy 5 sản phẩm mới nhất
         List<ProductInfoDTO> newProducts = productService.getListNewProducts();
@@ -73,6 +73,7 @@ public class HomeController {
         // Lấy 5 bài viết mới nhất
         List<Post> posts = postService.getLatesPost();
         model.addAttribute("posts", posts);
+        logger.info("get posts");
 
         return "shop/index";
     }
@@ -85,8 +86,10 @@ public class HomeController {
         try {
             product = productService.getDetailProductById(id);
         } catch (NotFoundException ex) {
+            logger.error("not found product");
             return "error/404";
         } catch (Exception ex) {
+            logger.error("exception in InternalServer");
             return "error/500";
         }
         model.addAttribute("product", product);
@@ -124,8 +127,10 @@ public class HomeController {
         try {
             product = productService.getDetailProductById(id);
         } catch (NotFoundException ex) {
+            logger.error("not found product");
             return "error/404";
         } catch (Exception ex) {
+            logger.error("exception in InternalServer");
             return "error/500";
         }
         model.addAttribute("product", product);

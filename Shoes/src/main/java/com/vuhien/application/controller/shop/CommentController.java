@@ -6,6 +6,8 @@ import com.vuhien.application.model.request.CreateCommentPostRequest;
 import com.vuhien.application.model.request.CreateCommentProductRequest;
 import com.vuhien.application.security.CustomUserDetails;
 import com.vuhien.application.service.CommentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,10 +22,13 @@ public class CommentController {
 
     @Autowired
     private CommentService commentService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommentController.class);
 
     @PostMapping("/api/comments/post")
     public ResponseEntity<Object> createComment(@Valid @RequestBody CreateCommentPostRequest createCommentPostRequest) {
         User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+        LOGGER.warn("get user authenticating");
+        LOGGER.info("get user authenticate with email: "+ user.getEmail());
         Comment comment = commentService.createCommentPost(createCommentPostRequest, user.getId());
         return ResponseEntity.ok(comment);
     }
