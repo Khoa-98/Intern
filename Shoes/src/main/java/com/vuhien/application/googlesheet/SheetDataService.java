@@ -16,7 +16,9 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.BatchGetValuesResponse;
 import com.vuhien.application.entity.Category;
 
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @Service
 public class SheetDataService {
 
@@ -24,10 +26,11 @@ public class SheetDataService {
     JdbcTemplate jdbcTemplate;
 
     public void renderProductFromGoogleSheetToDatabase() throws IOException, GeneralSecurityException {
-
-        List<List<Object>> valueRanges = getDataGoogleSheet("category");
+        log.info("start read data from gg sheet");
+        List<List<Object>> valueRanges = getDataGoogleSheet("category"); // name of spreadsheets
         List<Category> categories = convertDataFromGoogleSheetToDatabase(valueRanges);
-        batchInsertProduct(categories);
+        batchInsertCategory(categories);
+        log.info("write successful data from gg sheet to database");
 
     }
 
@@ -60,6 +63,9 @@ public class SheetDataService {
                     .id(Long.parseLong(values.get(i).get(0).toString()))
                     .name(values.get(i).get(1).toString())
                     .slug(values.get(i).get(2).toString())
+                    .status(Boolean.parseBoolean(values.get(i).get(3)
+                            .toString()))
+                    .order(Integer.parseInt(values.get(i).get(4).toString()))
                     .build();
 
             categories.add(category);
@@ -69,8 +75,8 @@ public class SheetDataService {
         return categories;
     }
 
-    public void batchInsertProduct(List<Category> categories) {
-        String sql = "INSERT INTO category (id,name, slug) VALUES (?,?,?)";
+    public void batchInsertCategory(List<Category> categories) {
+        String sql = "INSERT INTO category (id,name, slug,status, orders) VALUES (?,?,?,?,?)";
         int[] updateCounts = jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
             @Override
@@ -80,6 +86,9 @@ public class SheetDataService {
                 ps.setLong(1, c.getId());
                 ps.setString(2, c.getName());
                 ps.setString(3, c.getSlug());
+                ps.setBoolean(4, c.isStatus());
+                ps.setInt(5, c.getOrder());
+
             }
 
             @Override
