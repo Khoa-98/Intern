@@ -17,11 +17,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 
+import com.vuhien.application.utils.LoggerUtil;
+
+import lombok.extern.log4j.Log4j2;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.vuhien.application.config.Contant.LIMIT_USER;
 
+@Log4j2
 @Component
 public class UserServiceImpl implements UserService {
 
@@ -52,31 +57,36 @@ public class UserServiceImpl implements UserService {
     public User createUser(CreateUserRequest createUserRequest) {
         User user = userRepository.findByEmail(createUserRequest.getEmail());
         if (user != null) {
+            LoggerUtil.loggerLogin.error("email" + user.getEmail() + "is existed");
             throw new BadRequestException("Email đã tồn tại trong hệ thống. Vui lòng sử dụng email khác!");
         }
         user = UserMapper.toUser(createUserRequest);
         userRepository.save(user);
+        LoggerUtil.loggerLogin.info("save user " + user.getEmail() + " success");
         return user;
     }
 
     @Override
     public void changePassword(User user, ChangePasswordRequest changePasswordRequest) {
-        //Kiểm tra mật khẩu
+        // Kiểm tra mật khẩu
         if (!BCrypt.checkpw(changePasswordRequest.getOldPassword(), user.getPassword())) {
+
             throw new BadRequestException("Mật khẩu cũ không chính xác");
         }
 
         String hash = BCrypt.hashpw(changePasswordRequest.getNewPassword(), BCrypt.gensalt(12));
         user.setPassword(hash);
         userRepository.save(user);
+
     }
 
     @Override
     public User updateProfile(User user, UpdateProfileRequest updateProfileRequest) {
+        LoggerUtil.loggerLogin.info("update profile : " + user.getFullName());
         user.setFullName(updateProfileRequest.getFullName());
         user.setPhone(updateProfileRequest.getPhone());
         user.setAddress(updateProfileRequest.getAddress());
-
+        LoggerUtil.loggerLogin.info("update success ");
         return userRepository.save(user);
     }
 }

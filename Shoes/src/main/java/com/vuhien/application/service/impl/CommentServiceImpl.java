@@ -9,11 +9,16 @@ import com.vuhien.application.model.request.CreateCommentPostRequest;
 import com.vuhien.application.model.request.CreateCommentProductRequest;
 import com.vuhien.application.repository.CommentRepository;
 import com.vuhien.application.service.CommentService;
+import com.vuhien.application.utils.LoggerUtil;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 
+@Log4j2
 @Component
 public class CommentServiceImpl implements CommentService {
 
@@ -32,8 +37,10 @@ public class CommentServiceImpl implements CommentService {
         comment.setContent(createCommentPostRequest.getContent());
         comment.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         try {
+            LoggerUtil.loggerComment.info("comment success");
             commentRepository.save(comment);
         } catch (Exception e) {
+            LoggerUtil.loggerComment.error("error comment");
             throw new InternalServerException("Có lỗi trong quá trình bình luận!");
         }
         return comment;
