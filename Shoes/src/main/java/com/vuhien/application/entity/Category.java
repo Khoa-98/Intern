@@ -2,6 +2,7 @@ package com.vuhien.application.entity;
 
 import com.vuhien.application.model.dto.ChartDTO;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,6 +41,7 @@ import java.util.List;
 @Setter
 @Getter
 @Entity
+@Builder
 @Table(name = "category")
 public class Category {
     @Id

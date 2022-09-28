@@ -4,6 +4,7 @@ import com.vuhien.application.model.dto.ChartDTO;
 import com.vuhien.application.model.dto.ProductInfoDTO;
 import com.vuhien.application.model.dto.ShortProductInfoDTO;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -116,6 +117,7 @@ import java.util.List;
 @Setter
 @Getter
 @Entity
+@Builder
 @Table(name = "product")
 public class Product {
         @Id
