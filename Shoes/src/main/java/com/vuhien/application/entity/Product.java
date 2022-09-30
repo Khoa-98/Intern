@@ -11,6 +11,8 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,7 +121,7 @@ import java.util.List;
 @Entity
 @Builder
 @Table(name = "product")
-public class Product {
+public class Product implements Serializable{
         @Id
         @Column(name = "id")
         private String id;

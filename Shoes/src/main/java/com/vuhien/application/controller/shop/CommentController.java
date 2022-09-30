@@ -6,6 +6,10 @@ import com.vuhien.application.model.request.CreateCommentPostRequest;
 import com.vuhien.application.model.request.CreateCommentProductRequest;
 import com.vuhien.application.security.CustomUserDetails;
 import com.vuhien.application.service.CommentService;
+import com.vuhien.application.utils.LoggerUtil;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,20 +26,20 @@ public class CommentController {
 
     @Autowired
     private CommentService commentService;
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommentController.class);
 
     @PostMapping("/api/comments/post")
     public ResponseEntity<Object> createComment(@Valid @RequestBody CreateCommentPostRequest createCommentPostRequest) {
-        User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
-        LOGGER.warn("get user authenticating");
-        LOGGER.info("get user authenticate with email: "+ user.getEmail());
+        User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                .getUser();  
         Comment comment = commentService.createCommentPost(createCommentPostRequest, user.getId());
         return ResponseEntity.ok(comment);
     }
 
     @PostMapping("/api/comments/product")
-    public ResponseEntity<Object> createComment(@Valid @RequestBody CreateCommentProductRequest createCommentProductRequest) {
-        User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+    public ResponseEntity<Object> createComment(
+            @Valid @RequestBody CreateCommentProductRequest createCommentProductRequest) {
+        User user = ((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                .getUser();    
         Comment comment = commentService.createCommentProduct(createCommentProductRequest, user.getId());
         return ResponseEntity.ok(comment);
     }

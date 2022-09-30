@@ -28,12 +28,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.vuhien.application.config.Contant.*;
 
@@ -55,6 +57,9 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @Override
     public Page<Product> adminGetListProduct(String id, String name, String category, String brand, Integer page) {
         page--;
@@ -67,22 +72,22 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(CreateProductRequest createProductRequest) {
-        //Kiểm tra có danh muc
+        // Kiểm tra có danh muc
         if (createProductRequest.getCategoryIds().isEmpty()) {
             throw new BadRequestException("Danh mục trống!");
         }
-        //Kiểm tra có ảnh sản phẩm
+        // Kiểm tra có ảnh sản phẩm
         if (createProductRequest.getImages().isEmpty()) {
             throw new BadRequestException("Ảnh sản phẩm trống!");
         }
-        //Kiểm tra tên sản phẩm trùng
+        // Kiểm tra tên sản phẩm trùng
         Product product = productRepository.findByName(createProductRequest.getName());
         if (product != null) {
             throw new BadRequestException("Tên sản phẩm đã tồn tại trong hệ thống, Vui lòng chọn tên khác!");
         }
 
         product = ProductMapper.toProduct(createProductRequest);
-        //Sinh id
+        // Sinh id
         String id = RandomStringUtils.randomAlphanumeric(6);
         product.setId(id);
         product.setTotalSold(0);
@@ -98,25 +103,25 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void updateProduct(CreateProductRequest createProductRequest, String id) {
-        //Kiểm tra sản phẩm có tồn tại
+        // Kiểm tra sản phẩm có tồn tại
         Optional<Product> product = productRepository.findById(id);
         if (product.isEmpty()) {
             throw new NotFoundException("Không tìm thấy sản phẩm!");
         }
 
-        //Kiểm tra tên sản phẩm có tồn tại
+        // Kiểm tra tên sản phẩm có tồn tại
         Product rs = productRepository.findByName(createProductRequest.getName());
         if (rs != null) {
             if (!createProductRequest.getId().equals(rs.getId()))
                 throw new BadRequestException("Tên sản phẩm đã tồn tại trong hệ thống, Vui lòng chọn tên khác!");
         }
 
-        //Kiểm tra có danh muc
+        // Kiểm tra có danh muc
         if (createProductRequest.getCategoryIds().isEmpty()) {
             throw new BadRequestException("Danh mục trống!");
         }
 
-        //Kiểm tra có ảnh sản phẩm
+        // Kiểm tra có ảnh sản phẩm
         if (createProductRequest.getImages().isEmpty()) {
             throw new BadRequestException("Ảnh sản phẩm trống!");
         }
@@ -126,6 +131,8 @@ public class ProductServiceImpl implements ProductService {
         result.setModifiedAt(new Timestamp(System.currentTimeMillis()));
         try {
             productRepository.save(result);
+            // String cacheKey = "product" + id;
+            // redisTemplate.opsForValue().set(cacheKey, product_update);
         } catch (Exception e) {
             throw new InternalServerException("Có lỗi khi sửa sản phẩm!");
         }
@@ -138,6 +145,26 @@ public class ProductServiceImpl implements ProductService {
             throw new NotFoundException("Không tìm thấy sản phẩm trong hệ thống!");
         }
         return product.get();
+    }
+
+    @Override
+    public Product findProductById(String id) {
+        Product product = null;
+        String cacheKey = "product " + id;
+        // kiểm tra dữ liệu từ Redis , sau đó check từ database
+        product = (Product) redisTemplate.opsForValue().get(cacheKey);
+        if (product == null) {
+            // if no exist , find in database
+            Optional<Product> product_db = productRepository.findById(id);
+            if (product_db.isEmpty()) {
+                throw new NotFoundException("Không tìm thấy sản phẩm trong hệ thống!");
+            } else {
+                product = product_db.get();
+                // if exist in DB but not in cache Redis , need to set in cache
+                redisTemplate.opsForValue().set(cacheKey, product);
+            }
+        }
+        return product;
     }
 
     @Override
@@ -214,11 +241,11 @@ public class ProductServiceImpl implements ProductService {
         dto.setProductImages(product.getImages());
         dto.setComments(product.getComments());
 
-        //Cộng sản phẩm xem
+        // Cộng sản phẩm xem
         product.setView(product.getView() + 1);
         productRepository.save(product);
 
-        //Kiểm tra có khuyến mại
+        // Kiểm tra có khuyến mại
         Promotion promotion = promotionService.checkPublicPromotion();
         if (promotion != null) {
             dto.setCouponCode(promotion.getCouponCode());
@@ -248,7 +275,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void createSizeCount(CreateSizeCountRequest createSizeCountRequest) {
 
-        //Kiểm trả size
+        // Kiểm trả size
         boolean isValid = false;
         for (int size : SIZE_VN) {
             if (size == createSizeCountRequest.getSize()) {
@@ -260,13 +287,14 @@ public class ProductServiceImpl implements ProductService {
             throw new BadRequestException("Size không hợp lệ");
         }
 
-        //Kiểm trả sản phẩm có tồn tại
+        // Kiểm trả sản phẩm có tồn tại
         Optional<Product> product = productRepository.findById(createSizeCountRequest.getProductId());
         if (product.isEmpty()) {
             throw new NotFoundException("Không tìm thấy sản phẩm trong hệ thống!");
         }
 
-//        Optional<ProductSize> productSizeOld = productSizeRepository.getProductSizeBySize(createSizeCountRequest.getSize(),createSizeCountRequest.getProductId());
+        // Optional<ProductSize> productSizeOld =
+        // productSizeRepository.getProductSizeBySize(createSizeCountRequest.getSize(),createSizeCountRequest.getProductId());
 
         ProductSize productSize = new ProductSize();
         productSize.setProductId(createSizeCountRequest.getProductId());
@@ -302,10 +330,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductInfoDTO> checkPublicPromotion(List<ProductInfoDTO> products) {
-        //Kiểm tra có khuyến mại
+        // Kiểm tra có khuyến mại
         Promotion promotion = promotionService.checkPublicPromotion();
         if (promotion != null) {
-            //Tính giá sản phẩm khi có khuyến mại
+            // Tính giá sản phẩm khi có khuyến mại
             for (ProductInfoDTO product : products) {
                 long discountValue = promotion.getMaximumDiscountValue();
                 if (promotion.getDiscountType() == DISCOUNT_PERCENT) {
@@ -327,30 +355,28 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    //Tìm kiếm sản phẩm theo danh mục, nhãn hiệu, giá
-    public PageableDTO filterProduct(FilterProductRequest request){
+    // Tìm kiếm sản phẩm theo danh mục, nhãn hiệu, giá
+    public PageableDTO filterProduct(FilterProductRequest request) {
         PageUtil pageUtil = new PageUtil(LIMIT_PRODUCT_SHOP, request.getPage());
 
-        //Lấy danh sách sản phẩm và tổng số sản phẩm
+        // Lấy danh sách sản phẩm và tổng số sản phẩm
         int totalItems;
         List<ProductInfoDTO> products;
 
-        if(request.getSizes().isEmpty()){
+        if (request.getSizes().isEmpty()) {
             // Nếu ko có size
             products = productRepository.searchProductAllSize(
                     request.getBrands(),
                     request.getCategories(),
                     request.getMinPrice(),
                     request.getMaxPrice(),
-                    LIMIT_PRODUCT_SHOP, pageUtil.calculateOffset()
-            );
+                    LIMIT_PRODUCT_SHOP, pageUtil.calculateOffset());
             totalItems = productRepository.countProductAllSize(
                     request.getBrands(),
                     request.getCategories(),
                     request.getMinPrice(),
-                    request.getMaxPrice()
-            );
-        }else {
+                    request.getMaxPrice());
+        } else {
             // Nếu có size
             products = productRepository.searchProductBySize(
                     request.getBrands(),
@@ -358,15 +384,13 @@ public class ProductServiceImpl implements ProductService {
                     request.getMinPrice(),
                     request.getMaxPrice(),
                     request.getSizes(),
-                    LIMIT_PRODUCT_SHOP, pageUtil.calculateOffset()
-            );
+                    LIMIT_PRODUCT_SHOP, pageUtil.calculateOffset());
             totalItems = productRepository.countProductBySize(
                     request.getBrands(),
                     request.getCategories(),
                     request.getMinPrice(),
                     request.getMaxPrice(),
-                    request.getSizes()
-            );
+                    request.getSizes());
         }
 
         // Tính tổng số trang
@@ -387,13 +411,14 @@ public class ProductServiceImpl implements ProductService {
 
         PageUtil pageInfo = new PageUtil(LIMIT_PRODUCT_SEARCH, page);
 
-        //Lấy danh sách sản phẩm theo key
-        List<ProductInfoDTO> products = productRepository.searchProductByKeyword(keyword, LIMIT_PRODUCT_SEARCH, pageInfo.calculateOffset());
+        // Lấy danh sách sản phẩm theo key
+        List<ProductInfoDTO> products = productRepository.searchProductByKeyword(keyword, LIMIT_PRODUCT_SEARCH,
+                pageInfo.calculateOffset());
 
-        //Lấy số sản phẩm theo key
+        // Lấy số sản phẩm theo key
         int totalItems = productRepository.countProductByKeyword(keyword);
 
-        //Tính số trang
+        // Tính số trang
         int totalPages = pageInfo.calculateTotalPage(totalItems);
 
         return new PageableDTO(checkPublicPromotion(products), totalPages, page);
@@ -430,4 +455,5 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getAllProduct() {
         return productRepository.findAll();
     }
+
 }

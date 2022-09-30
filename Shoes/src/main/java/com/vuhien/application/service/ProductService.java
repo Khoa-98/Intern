@@ -31,6 +31,9 @@ public interface ProductService {
     //Lấy chi tiết sản phẩm
     Product getProductById(String id);
 
+    // Redis lấy product theo id
+    Product findProductById(String id);
+    
     //Xóa sản phẩm theo id
     void deleteProduct(String[] ids);
 

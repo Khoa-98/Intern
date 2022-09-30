@@ -88,7 +88,7 @@ public class ProductController {
     public String getProductUpdatePage(Model model, @PathVariable String id) {
 
         // Lấy thông tin sản phẩm theo id
-        Product product = productService.getProductById(id);
+        Product product = productService.findProductById(id);
         model.addAttribute("product", product);
 
         // Lấy danh sách ảnh của user
@@ -127,7 +127,7 @@ public class ProductController {
 
     @GetMapping("/api/admin/products/{id}")
     public ResponseEntity<Object> getProductDetail(@PathVariable String id) {
-        Product rs = productService.getProductById(id);
+        Product rs = productService.findProductById(id);
         return ResponseEntity.ok(rs);
     }
 

@@ -49,7 +49,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         httpSecurity
                 .cors()
                 .and()
-                .csrf()
+                .csrf() // CSRF ( Cross Site Request Forgery) là kĩ thuật tấn công bằng cách sử dụng
+                        // quyền chứng thực của người sử dụng đối với 1 website khác
                 .disable()
                 .authorizeRequests()
                 .antMatchers("/api/order", "/tai-khoan", "/tai-khoan/**", "/api/change-password", "/api/update-profile").authenticated()
@@ -67,6 +68,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
+                // Thêm một lớp Filter kiểm tra jwt
                 .addFilterBefore(jwtRequestFillter, UsernamePasswordAuthenticationFilter.class);
     }
 
