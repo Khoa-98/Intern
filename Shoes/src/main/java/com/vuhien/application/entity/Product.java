@@ -120,7 +120,10 @@ import java.util.List;
 @Getter
 @Entity
 @Builder
-@Table(name = "product")
+@Table(name = "product"
+                , indexes = {
+                        @Index(name = "name_index", columnList = "name")
+                })
 public class Product implements Serializable{
         @Id
         @Column(name = "id")

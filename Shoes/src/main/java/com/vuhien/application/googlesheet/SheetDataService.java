@@ -13,8 +13,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.google.api.services.sheets.v4.Sheets;
+import com.google.api.services.sheets.v4.model.AppendValuesResponse;
 import com.google.api.services.sheets.v4.model.BatchGetValuesResponse;
+import com.google.api.services.sheets.v4.model.ValueRange;
 import com.vuhien.application.entity.Category;
+import com.vuhien.application.entity.Comment;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -96,6 +99,22 @@ public class SheetDataService {
                 return categories.size();
             }
         });
+    }
+
+    public void writeComment(Comment comment) throws IOException, GeneralSecurityException {
+        String SPREADSHEET_ID = "1kXjpqzPEglq3BSihQknP6mIzjQoIlWWVZmakpW_HLyk";
+        Sheets sheetService = SheetsServiceUtil.getSheetService();
+
+        ValueRange appendBody = new ValueRange()
+                .setValues(Arrays.asList(Arrays.asList("id", "content", "createdAt"),
+                        Arrays.asList(comment.getId() + "", comment.getContent() + "", comment.getCreatedAt() + "")));
+        AppendValuesResponse appendResult = sheetService.spreadsheets().values()
+                .append(SPREADSHEET_ID, "comment", appendBody)
+                .setValueInputOption("USER_ENTERED")
+                .setInsertDataOption("INSERT_ROWS")
+                .setIncludeValuesInResponse(true)
+                .execute();
+
     }
 
 }
